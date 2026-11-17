@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rust Image Share</title>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+      .container {
+        width: 100%;
+        max-width: 440px;
+        margin: 30px auto;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 4px 4px 30px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        background: #fff;
+        box-sizing: border-box;
+      }
+
+      .container h1 {
+        margin: 0;
+        font-size: 27px;
+        color: #111827;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0 0 8px;
+        line-height: 1.6;
+      }
+
+      /* Upload container */
+      .upload-container {
+        width: 100%;
+        height: 260px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 10px;
+        box-sizing: border-box;
+      }
+
+      .upload-container input {
+        display: none;
+      }
+
+      .header {
+        flex: 1;
+        width: 100%;
+        border: 2px dashed royalblue;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: rgba(0, 110, 255, 0.035);
+        transition: 0.2s ease;
+      }
+
+      .header:hover {
+        background: rgba(0, 110, 255, 0.08);
+      }
+
+      .header svg {
+        height: 75px;
+        width: 75px;
+        color: royalblue;
+      }
+
+      .header p {
+        text-align: center;
+        color: #111827;
+        margin: 10px 0 5px;
+      }
+
+      .header small {
+        font-size: 11px;
+        color: #6b7280;
+      }
+
+      /* File footer */
+      .upload-footer {
+        background: rgba(0, 110, 255, 0.075);
+        width: 100%;
+        height: 45px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        color: #111827;
+        box-sizing: border-box;
+        transition: 0.2s;
+      }
+
+      .upload-footer:hover {
+        background: rgba(0, 110, 255, 0.14);
+      }
+
+      .upload-footer svg {
+        height: 25px;
+        width: 25px;
+        fill: royalblue;
+        flex-shrink: 0;
+      }
+
+      .upload-footer p {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        margin: 0 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .upload-footer .delete-icon {
+        fill: none;
+        color: #ef4444;
+        background: rgba(70, 66, 66, 0.08);
+        border-radius: 50%;
+        padding: 4px;
+        box-sizing: border-box;
+      }
+
+      /* Image preview */
+      .preview {
+        display: none;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+
+      .preview img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        object-fit: contain;
+      }
+
+      .file-name {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 8px;
+        overflow-wrap: anywhere;
+      }
+
+      /* Upload button */
+      #uploadButton {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 9px;
+        background: royalblue;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      #uploadButton:hover:not(:disabled) {
+        background: #2454c5;
+      }
+
+      #uploadButton:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Progress */
+      .progress {
+        display: none;
+        width: 100%;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: royalblue;
+        transition: width 0.2s;
+      }
+
+      .status {
+        width: 100%;
+        text-align: center;
+        font-size: 13px;
+      }
+
+      /* Upload result */
+      .result {
+        display: none;
+        width: 100%;
+      }
+
+      .success {
+        color: #16a34a;
+        font-weight: 600;
+        text-align: center;
+        padding: 12px;
+        background: #f0fdf4;
+        border-radius: 8px;
+      }
+
+      .result h3 {
+        font-size: 15px;
+        margin: 18px 0 10px;
+      }
+
+      .link-box {
+        display: flex;
+        gap: 6px;
+      }
+
+      .link-box input {
+        min-width: 0;
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 7px;
+      }
+
+      .link-box button,
+      .secondary-button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 7px;
+        background: royalblue;
+        color: white;
+        cursor: pointer;
+      }
+
+      .download-link {
+        display: block;
+        margin-top: 12px;
+        text-align: center;
+        color: royalblue;
+      }
+
+      .qr-section {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      #qrcode {
+        display: flex;
+        justify-content: center;
+        margin: 15px auto;
+      }
+
+      #qrcode img,
+      #qrcode canvas {
+        max-width: 100%;
+      }
+
+      .qr-section p {
+        color: #6b7280;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .footer {
+        margin-top: 10px;
+        color: #9ca3af;
+        font-size: 12px;
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          margin: 10px auto;
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Image Share</h1>
+      <p class="subtitle">
+        Upload an image and share it with anyone using a link or QR code.
+      </p>
+
+      <!-- Upload Area -->
+      <div class="upload-container">
+        <div class="header">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10C19.2091 10 21 11.7909 21 14C21 15.4806 20.1956 16.8084 19 17.5M7 10C4.79086 10 3 11.7909 3 14C3 15.4806 3.8044 16.8084 5 17.5M7 10C7.43285 10 7.84965 10.0688 8.24006 10.1959M12 12V21M12 12L15 15M12 12L9 15"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+
+          <p><strong>Browse File to upload!</strong></p>
+          <small>JPG, PNG, GIF, WEBP or BMP · Maximum 10 MB</small>
+        </div>
+
+        <label for="imageInput" class="upload-footer">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15.331 6H8.5v20h15V14.154h-8.169z"></path>
+            <path d="M18.153 6h-.009v5.342H23.5v-.002z"></path>
+          </svg>
+
+          <p id="fileName">No file selected</p>
+
+          <svg
+            class="delete-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5.16565 10.1534C5.07629 8.99181 5.99473 8 7.15975 8H16.8402C18.0053 8 18.9237 8.9918 18.8344 10.1534L18.142 19.1534C18.0619 20.1954 17.193 21 16.1479 21H7.85206C6.80699 21 5.93811 20.1954 5.85795 19.1534L5.16565 10.1534Z"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <path
+              d="M19.5 5H4.5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <path
+              d="M10 3C10 2.44772 10.4477 2 11 2H13C13.5523 2 14 2.44772 14 3V5H10V3Z"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+          </svg>
+        </label>
+
+        <input
+          type="file"
+          id="imageInput"
+          accept="image/jpeg,image/png,image/gif,image/webp,image/bmp"
+        />
+      </div>
+
+      <!-- Image Preview -->
+      <div class="preview" id="preview">
+        <img id="previewImage" alt="Selected image preview" />
+        <div class="file-name" id="previewFileName"></div>
+      </div>
+
+      <!-- Upload Button -->
+      <button id="uploadButton" disabled>Upload Image</button>
+
+      <!-- Progress -->
+      <div class="progress" id="progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <!-- Upload Result -->
+      <div class="result" id="result">
+        <div class="success">✓ Image Uploaded Successfully!</div>
+
+        <h3>Share Download Link</h3>
+
+        <div class="link-box">
+          <input type="text" id="shareLink" readonly />
+          <button type="button" id="copyButton">Copy</button>
+        </div>
+
+        <a href="#" id="downloadLink" class="download-link" target="_blank">
+          Download Image
+        </a>
+
+        <!-- QR Code -->
+        <div class="qr-section">
+          <h3>Scan to Download</h3>
+          <div id="qrcode"></div>
+
+          <p>
+            Scan this QR code using your mobile camera to download the image.
+          </p>
+
+          <button type="button" id="downloadQR" class="secondary-button">
+            Download QR Code
+          </button>
+        </div>
+      </div>
+
+      <div class="footer">Powered by Rust Image Share</div>
+    </div>
+
+    <script>
+      const imageInput = document.getElementById("imageInput");
+      const uploadButton = document.getElementById("uploadButton");
+      const preview = document.getElementById("preview");
+      const previewImage = document.getElementById("previewImage");
+      const fileName = document.getElementById("fileName");
+
+      const progress = document.getElementById("progress");
+      const progressBar = document.getElementById("progressBar");
+      const status = document.getElementById("status");
+
+      const result = document.getElementById("result");
+      const shareLink = document.getElementById("shareLink");
+      const downloadLink = document.getElementById("downloadLink");
+
+      let selectedFile = null;
+      let previewUrl = null;
+
+      // Select image
+      imageInput.addEventListener("change", () => {
+        const file = imageInput.files[0];
+
+        result.style.display = "none";
+        status.textContent = "";
+        progress.style.display = "none";
+        progressBar.style.width = "0%";
+
+        if (!file) {
+          selectedFile = null;
+          uploadButton.disabled = true;
+          return;
+        }
+
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+          "image/bmp",
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+          alert("Please select a valid image.");
+          imageInput.value = "";
+          selectedFile = null;
+          uploadButton.disabled = true;
+          preview.style.display = "none";
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          alert("Image size must be less than 10 MB.");
+          imageInput.value = "";
+          selectedFile = null;
+          uploadButton.disabled = true;
+          preview.style.display = "none";
+          return;
+        }
+
+        selectedFile = file;
+
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+
+        previewUrl = URL.createObjectURL(file);
+        previewImage.src = previewUrl;
+        fileName.textContent = file.name;
+
+        preview.style.display = "block";
+        uploadButton.disabled = false;
+      });
+
+      // Upload image and generate LAN QR code
+      uploadButton.addEventListener("click", async () => {
+        if (!selectedFile) {
+          alert("Please select an image first.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", selectedFile);
+
+        uploadButton.disabled = true;
+        result.style.display = "none";
+        progress.style.display = "block";
+        progressBar.style.width = "10%";
+
+        try {
+          // STEP 1: Automatically detect server LAN IP
+          status.textContent = "Detecting server IP...";
+
+          const infoResponse = await fetch("/server-info", {
+            cache: "no-store",
+          });
+
+          if (!infoResponse.ok) {
+            throw new Error("Could not detect server IP.");
+          }
+
+          const serverInfo = await infoResponse.json();
+
+          if (!serverInfo.ip || !serverInfo.port) {
+            throw new Error("Invalid server IP information.");
+          }
+
+          const serverIP = serverInfo.ip;
+          const serverPort = serverInfo.port;
+
+          if (
+            serverIP === "127.0.0.1" ||
+            serverIP === "localhost" ||
+            serverIP === "::1"
+          ) {
+            throw new Error(
+              "Rust detected localhost instead of a LAN IP. Check your Rust IP detection.",
+            );
+          }
+
+          // Build server URL using detected IP
+          const SERVER_URL = `http://${serverIP}:${serverPort}`;
+
+          console.log("Detected server IP:", serverIP);
+          console.log("LAN server URL:", SERVER_URL);
+
+          progressBar.style.width = "30%";
+
+          // STEP 2: Upload image
+          status.textContent = "Uploading image...";
+
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || "Upload failed.");
+          }
+
+          const data = await response.json();
+
+          if (!data.success || !data.download_url) {
+            throw new Error("Server did not return a download URL.");
+          }
+
+          progressBar.style.width = "75%";
+
+          // STEP 3: Create download URL using detected LAN IP
+          const downloadPath = data.download_url.startsWith("/")
+            ? data.download_url
+            : `/${data.download_url}`;
+
+          const downloadUrl = `${SERVER_URL}${downloadPath}`;
+
+          console.log("QR code download URL:", downloadUrl);
+
+          // STEP 4: Display download link
+          shareLink.value = downloadUrl;
+          downloadLink.href = downloadUrl;
+
+          // STEP 5: Generate QR code
+          status.textContent = "Generating QR code...";
+
+          const qrContainer = document.getElementById("qrcode");
+          qrContainer.innerHTML = "";
+
+          if (typeof QRCode === "undefined") {
+            throw new Error(
+              "QR code library could not load. Check your internet connection.",
+            );
+          }
+
+          new QRCode(qrContainer, {
+            text: downloadUrl,
+            width: 220,
+            height: 220,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+          });
+
+          // STEP 6: Complete
+          progressBar.style.width = "100%";
+          status.textContent = "Image uploaded successfully!";
+          result.style.display = "block";
+        } catch (error) {
+          console.error("Upload error:", error);
+          status.textContent = "Error: " + error.message;
+        } finally {
+          uploadButton.disabled = false;
+        }
+      });
+
+      // Copy download link
+      document
+        .getElementById("copyButton")
+        .addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(shareLink.value);
+
+            const copyButton = document.getElementById("copyButton");
+            copyButton.textContent = "Copied!";
+
+            setTimeout(() => {
+              copyButton.textContent = "Copy";
+            }, 2000);
+          } catch {
+            shareLink.select();
+            document.execCommand("copy");
+            alert("Download link copied.");
+          }
+        });
+
+      // Download QR code
+      document.getElementById("downloadQR").addEventListener("click", () => {
+        const qrContainer = document.getElementById("qrcode");
+        const canvas = qrContainer.querySelector("canvas");
+
+        if (!canvas) {
+          alert("QR code is not ready.");
+          return;
+        }
+
+        const link = document.createElement("a");
+        link.download = "image-download-qr.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    </script>
+  </body>
+</html>
