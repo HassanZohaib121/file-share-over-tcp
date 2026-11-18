@@ -1,0 +1,634 @@
+
+import { Button, ScrollView } from "std-widgets.slint";
+
+component UploadIcon inherits Rectangle {
+    width: 58px;
+    height: 48px;
+    background: transparent;
+
+    Rectangle {
+        x: 8px;
+        y: 20px;
+        width: 42px;
+        height: 20px;
+        background: #4169e1;
+        border-radius: 10px;
+    }
+
+    Rectangle {
+        x: 7px;
+        y: 18px;
+        width: 23px;
+        height: 23px;
+        background: #4169e1;
+        border-radius: 12px;
+    }
+
+    Rectangle {
+        x: 17px;
+        y: 8px;
+        width: 30px;
+        height: 30px;
+        background: #4169e1;
+        border-radius: 15px;
+    }
+
+    Rectangle {
+        x: 31px;
+        y: 17px;
+        width: 21px;
+        height: 21px;
+        background: #4169e1;
+        border-radius: 11px;
+    }
+
+    Rectangle {
+        x: 28px;
+        y: 16px;
+        width: 3px;
+        height: 15px;
+        background: white;
+        border-radius: 1.5px;
+    }
+
+    Rectangle {
+        x: 22px;
+        y: 17px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 25px;
+        y: 14px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 28px;
+        y: 11px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 31px;
+        y: 14px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 34px;
+        y: 17px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+}
+
+component FileIcon inherits Rectangle {
+    width: 20px;
+    height: 22px;
+    background: transparent;
+
+    Rectangle {
+        x: 3px;
+        y: 1px;
+        width: 14px;
+        height: 20px;
+        background: white;
+        border-radius: 2px;
+        border-width: 1.5px;
+        border-color: #4169e1;
+    }
+
+    Rectangle {
+        x: 6px;
+        y: 8px;
+        width: 8px;
+        height: 1.5px;
+        background: #4169e1;
+    }
+
+    Rectangle {
+        x: 6px;
+        y: 12px;
+        width: 8px;
+        height: 1.5px;
+        background: #4169e1;
+    }
+
+    Rectangle {
+        x: 6px;
+        y: 16px;
+        width: 6px;
+        height: 1.5px;
+        background: #4169e1;
+    }
+}
+
+component CloseIcon inherits Rectangle {
+    width: 18px;
+    height: 18px;
+    background: transparent;
+
+    Rectangle {
+        x: 3px;
+        y: 3px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 12px;
+        y: 3px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 6px;
+        y: 6px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 9px;
+        y: 6px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 6px;
+        y: 9px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 9px;
+        y: 9px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 3px;
+        y: 12px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+
+    Rectangle {
+        x: 12px;
+        y: 12px;
+        width: 3px;
+        height: 3px;
+        background: #ef4444;
+    }
+}
+
+component SuccessIcon inherits Rectangle {
+    width: 20px;
+    height: 20px;
+    background: #16a34a;
+    border-radius: 10px;
+
+    Rectangle {
+        x: 4px;
+        y: 7px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 7px;
+        y: 10px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 10px;
+        y: 7px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+
+    Rectangle {
+        x: 13px;
+        y: 4px;
+        width: 3px;
+        height: 3px;
+        background: white;
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "RustDrop - File Share";
+    width: 390px;
+    height: 844px;
+    background: #f4f7fb;
+
+    // Application state
+    in-out property <bool> has_file: false;
+    in-out property <bool> can_upload: false;
+    in-out property <bool> is_uploading: false;
+    in-out property <bool> upload_complete: false;
+    in-out property <bool> is_image: false;
+
+    in-out property <string> file_name: "No file selected";
+    in-out property <string> status_text: "";
+    in-out property <string> share_link: "";
+
+    in-out property <int> progress: 0;
+
+    in-out property <image> preview_image;
+    in-out property <image> qr_image;
+
+    // Rust callbacks
+    callback select_file_requested();
+    callback remove_file_requested();
+    callback upload_requested();
+    callback copy_link_requested();
+    callback download_qr_requested();
+
+    ScrollView {
+        width: 100%;
+        height: 100%;
+
+        VerticalLayout {
+            padding: 20px;
+            spacing: 16px;
+            alignment: center;
+
+            // Main heading
+            Text {
+                text: "File Share";
+                color: #111827;
+                font-size: 28px;
+                font-weight: 700;
+                horizontal-alignment: center;
+            }
+
+            Text {
+                text: "Upload a file and share it with anyone using a link or QR code.\nFiles are automatically deleted after 1 hour.";
+                color: #6b7280;
+                font-size: 13px;
+                horizontal-alignment: center;
+                wrap: word-wrap;
+            }
+
+            // Upload area
+            Rectangle {
+                width: 100%;
+                height: 220px;
+                background: white;
+                border-radius: 14px;
+                border-width: 1px;
+                border-color: #e5e7eb;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 10px;
+
+                    // Browse area
+                    Rectangle {
+                        height: 145px;
+                        background: #f5f8ff;
+                        border-radius: 12px;
+                        border-width: 2px;
+                        border-color: #4169e1;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 10px;
+
+                            HorizontalLayout {
+                                width: 100%;
+                                height: 48px;
+                                alignment: center;
+
+                                UploadIcon {
+                                }
+                            }
+
+                            Text {
+                                text: "Browse File to upload!";
+                                color: #111827;
+                                font-size: 15px;
+                                font-weight: 700;
+                                horizontal-alignment: center;
+                            }
+
+                            Text {
+                                text: "All file types - Maximum 10 MB";
+                                color: #6b7280;
+                                font-size: 11px;
+                                horizontal-alignment: center;
+                            }
+                        }
+
+                        TouchArea {
+                            clicked => {
+                                root.select_file_requested();
+                            }
+                        }
+                    }
+
+                    // Selected file footer
+                    Rectangle {
+                        height: 43px;
+                        background: #edf2ff;
+                        border-radius: 9px;
+
+                        HorizontalLayout {
+                            padding: 8px;
+                            spacing: 8px;
+
+                            FileIcon {
+                            }
+
+                            Text {
+                                text: root.file_name;
+                                color: #111827;
+                                font-size: 11px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+
+                            Rectangle {
+                                width: 30px;
+                                background: transparent;
+
+                                CloseIcon {
+                                    x: 6px;
+                                    y: 6px;
+                                }
+
+                                TouchArea {
+                                    enabled: root.has_file;
+                                    clicked => {
+                                        root.remove_file_requested();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Image preview
+            if root.has_file && root.is_image : Rectangle {
+                width: 100%;
+                height: 190px;
+                background: white;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: #e5e7eb;
+
+                VerticalLayout {
+                    padding: 10px;
+                    spacing: 6px;
+
+                    Image {
+                        source: root.preview_image;
+                        image-fit: contain;
+                        width: 100%;
+                        height: 145px;
+                    }
+
+                    Text {
+                        text: root.file_name;
+                        color: #6b7280;
+                        font-size: 11px;
+                        horizontal-alignment: center;
+                        overflow: elide;
+                    }
+                }
+            }
+
+            // Upload button
+            Rectangle {
+                width: 100%;
+                height: 48px;
+                background: root.can_upload && !root.is_uploading ? #4169e1 : #a5b4d4;
+                border-radius: 9px;
+
+                Text {
+                    text: root.is_uploading ? "Uploading..." : "Upload File";
+                    color: white;
+                    font-size: 15px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                TouchArea {
+                    enabled: root.can_upload && !root.is_uploading;
+                    clicked => {
+                        root.upload_requested();
+                    }
+                }
+            }
+
+            // Progress bar
+            if root.is_uploading : Rectangle {
+                width: 100%;
+                height: 8px;
+                background: #e5e7eb;
+                border-radius: 10px;
+                clip: true;
+
+                Rectangle {
+                    width: parent.width * root.progress / 100;
+                    height: parent.height;
+                    background: #4169e1;
+                    border-radius: 10px;
+                }
+            }
+
+            // Status message
+            if root.status_text != "" : Text {
+                text: root.status_text;
+                color: #475569;
+                font-size: 12px;
+                horizontal-alignment: center;
+                wrap: word-wrap;
+            }
+
+            // Upload result
+            if root.upload_complete : Rectangle {
+                width: 100%;
+                background: white;
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: #e5e7eb;
+
+                VerticalLayout {
+                    padding: 14px;
+                    spacing: 12px;
+
+                    Rectangle {
+                        height: 44px;
+                        background: #f0fdf4;
+                        border-radius: 8px;
+
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 8px;
+
+                            SuccessIcon {
+                            }
+
+                            Text {
+                                text: "File Uploaded Successfully!";
+                                color: #16a34a;
+                                font-size: 12px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: "Share Download Link";
+                        color: #111827;
+                        font-size: 15px;
+                        font-weight: 700;
+                    }
+
+                    // Share link
+                    Rectangle {
+                        height: 44px;
+                        background: #f9fafb;
+                        border-radius: 7px;
+                        border-width: 1px;
+                        border-color: #e5e7eb;
+
+                        HorizontalLayout {
+                            padding: 6px;
+                            spacing: 5px;
+
+                            Text {
+                                text: root.share_link;
+                                color: #111827;
+                                font-size: 10px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+
+                            Rectangle {
+                                width: 65px;
+                                background: #4169e1;
+                                border-radius: 6px;
+
+                                Text {
+                                    text: "Copy";
+                                    color: white;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                TouchArea {
+                                    clicked => {
+                                        root.copy_link_requested();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // QR code section
+                    Text {
+                        text: "Scan to Download";
+                        color: #111827;
+                        font-size: 16px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+
+                    Rectangle {
+                        height: 230px;
+                        background: #ffffff;
+                        border-radius: 10px;
+
+                        Image {
+                            source: root.qr_image;
+                            image-fit: contain;
+                            width: 210px;
+                            height: 210px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Text {
+                        text: "Scan this QR code using your mobile camera to download the file.";
+                        color: #6b7280;
+                        font-size: 11px;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                    }
+
+                    // Download QR button
+                    Rectangle {
+                        height: 44px;
+                        background: #4169e1;
+                        border-radius: 8px;
+
+                        Text {
+                            text: "Download QR Code";
+                            color: white;
+                            font-size: 13px;
+                            font-weight: 700;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        TouchArea {
+                            clicked => {
+                                root.download_qr_requested();
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: "Files automatically expire after 1 hour.";
+                        color: #9ca3af;
+                        font-size: 11px;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+
+            // Footer
+            Text {
+                text: "Powered by RustDrop";
+                color: #9ca3af;
+                font-size: 12px;
+                horizontal-alignment: center;
+            }
+        }
+    }
+}

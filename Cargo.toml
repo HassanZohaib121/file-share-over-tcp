@@ -1,7 +1,34 @@
+
 [package]
-name = "rust_tcp"
+name = "rustdrop"
 version = "0.1.0"
 edition = "2024"
+
+[lib]
+name = "rustdrop"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "rustdrop-desktop"
+path = "src/main.rs"
+
+[package.metadata.android]
+package = "com.rustdrop.app"
+min_sdk_version = 26
+
+[package.metadata.android.application]
+label = "RustDrop"
+
+[[package.metadata.android.application.activity]]
+name = "android.app.NativeActivity"
+
+[[package.metadata.android.application.activity.meta_data]]
+name = "android.app.lib_name"
+value = "rustdrop"
+
+[[package.metadata.android.application.activity.intent_filter]]
+actions = ["android.intent.action.MAIN"]
+categories = ["android.intent.category.LAUNCHER"]
 
 [dependencies]
 axum = { version = "0.8", features = ["multipart"] }
@@ -9,12 +36,19 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 uuid = { version = "1", features = ["v4"] }
 qrcode = "0.14"
+image = { version = "0.25", default-features = false, features = ["png"] }
 local-ip-address = "0.6"
+sea-orm = { version = "2.0.4", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+slint = { version = "1.19.0", features = ["backend-android-activity-06"] }
+robius-file-picker = "0.3.1"
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "multipart", "rustls"] }
 
-# [[bin]]
-# name = "server"
-# path = "src/server.rs"
+[target.'cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))'.dependencies]
+arboard = "3.7.0"
 
-# [[bin]]
-# name = "client"
-# path = "src/client.rs"
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { version = "0.22.4", default-features = false }
+robius-android-env = "0.2.0"
+
+[build-dependencies]
+slint-build = "1.19.0"
