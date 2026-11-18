@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rust Image Share</title>
+    <title>Rust File Share</title>
 
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -133,7 +133,7 @@
         box-sizing: border-box;
       }
 
-      /* Image preview */
+      /* File preview */
       .preview {
         display: none;
         width: 100%;
@@ -293,9 +293,10 @@
 
   <body>
     <div class="container">
-      <h1>Image Share</h1>
+      <h1>File Share</h1>
       <p class="subtitle">
-        Upload an image and share it with anyone using a link or QR code.
+        Upload a file and share it with anyone using a link or QR code.<br />
+        Files are automatically deleted after 1 hour.
       </p>
 
       <!-- Upload Area -->
@@ -316,7 +317,7 @@
           </svg>
 
           <p><strong>Browse File to upload!</strong></p>
-          <small>JPG, PNG, GIF, WEBP or BMP · Maximum 10 MB</small>
+          <small>All file types · Maximum 10 MB</small>
         </div>
 
         <label for="imageInput" class="upload-footer">
@@ -355,18 +356,17 @@
         <input
           type="file"
           id="imageInput"
-          accept="image/jpeg,image/png,image/gif,image/webp,image/bmp"
         />
       </div>
 
-      <!-- Image Preview -->
+      <!-- File Preview -->
       <div class="preview" id="preview">
         <img id="previewImage" alt="Selected image preview" />
         <div class="file-name" id="previewFileName"></div>
       </div>
 
       <!-- Upload Button -->
-      <button id="uploadButton" disabled>Upload Image</button>
+      <button id="uploadButton" disabled>Upload File</button>
 
       <!-- Progress -->
       <div class="progress" id="progress">
@@ -377,7 +377,9 @@
 
       <!-- Upload Result -->
       <div class="result" id="result">
-        <div class="success">✓ Image Uploaded Successfully!</div>
+        <div class="success">
+          ✓ File Uploaded Successfully! It will expire after 1 hour.
+        </div>
 
         <h3>Share Download Link</h3>
 
@@ -387,7 +389,7 @@
         </div>
 
         <a href="#" id="downloadLink" class="download-link" target="_blank">
-          Download Image
+          Download File
         </a>
 
         <!-- QR Code -->
@@ -396,7 +398,7 @@
           <div id="qrcode"></div>
 
           <p>
-            Scan this QR code using your mobile camera to download the image.
+            Scan this QR code using your mobile camera to download the file.
           </p>
 
           <button type="button" id="downloadQR" class="secondary-button">
@@ -405,7 +407,7 @@
         </div>
       </div>
 
-      <div class="footer">Powered by Rust Image Share</div>
+      <div class="footer">Powered by Rust File Share</div>
     </div>
 
     <script>
@@ -426,7 +428,7 @@
       let selectedFile = null;
       let previewUrl = null;
 
-      // Select image
+      // Select file
       imageInput.addEventListener("change", () => {
         const file = imageInput.files[0];
 
@@ -441,25 +443,8 @@
           return;
         }
 
-        const allowedTypes = [
-          "image/jpeg",
-          "image/png",
-          "image/gif",
-          "image/webp",
-          "image/bmp",
-        ];
-
-        if (!allowedTypes.includes(file.type)) {
-          alert("Please select a valid image.");
-          imageInput.value = "";
-          selectedFile = null;
-          uploadButton.disabled = true;
-          preview.style.display = "none";
-          return;
-        }
-
         if (file.size > 10 * 1024 * 1024) {
-          alert("Image size must be less than 10 MB.");
+          alert("File size must be less than 10 MB.");
           imageInput.value = "";
           selectedFile = null;
           uploadButton.disabled = true;
@@ -474,22 +459,27 @@
         }
 
         previewUrl = URL.createObjectURL(file);
-        previewImage.src = previewUrl;
+        if (file.type.startsWith("image/")) {
+          previewImage.src = previewUrl;
+          preview.style.display = "block";
+        } else {
+          previewImage.removeAttribute("src");
+          preview.style.display = "none";
+        }
         fileName.textContent = file.name;
 
-        preview.style.display = "block";
         uploadButton.disabled = false;
       });
 
-      // Upload image and generate LAN QR code
+      // Upload file and generate LAN QR code
       uploadButton.addEventListener("click", async () => {
         if (!selectedFile) {
-          alert("Please select an image first.");
+          alert("Please select a file first.");
           return;
         }
 
         const formData = new FormData();
-        formData.append("image", selectedFile);
+        formData.append("file", selectedFile);
 
         uploadButton.disabled = true;
         result.style.display = "none";
@@ -535,8 +525,8 @@
 
           progressBar.style.width = "30%";
 
-          // STEP 2: Upload image
-          status.textContent = "Uploading image...";
+          // STEP 2: Upload file
+          status.textContent = "Uploading file...";
 
           const response = await fetch("/upload", {
             method: "POST",
@@ -592,7 +582,7 @@
 
           // STEP 6: Complete
           progressBar.style.width = "100%";
-          status.textContent = "Image uploaded successfully!";
+          status.textContent = "File uploaded successfully!";
           result.style.display = "block";
         } catch (error) {
           console.error("Upload error:", error);
